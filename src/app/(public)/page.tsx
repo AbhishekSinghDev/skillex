@@ -1,14 +1,15 @@
-import Footer from "@/components/shared/footer";
-import Navbar from "@/components/shared/navbar";
+import Footer from "@/components/landing-page/footer";
+import Header from "@/components/landing-page/header";
+import Hero from "@/components/landing-page/hero";
 
-const page = () => {
+export default function LandingPage() {
   return (
-    <>
-      <Navbar />
-      <main>page</main>
+    <main className="min-h-screen bg-white dark:bg-[#111111]">
+      <Header />
+      <div className="pt-4 max-w-2xl mx-auto px-4">
+        <Hero />
+      </div>
       <Footer />
-    </>
+    </main>
   );
-};
-
-export default page;
+}

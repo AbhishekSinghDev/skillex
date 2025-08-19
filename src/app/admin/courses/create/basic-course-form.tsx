@@ -15,6 +15,7 @@ import {
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import DNDFileUploader from "@/components/dnd-file-uploader/uploader";
 import RichTextEditor from "@/components/rich-text-editor/editor";
 import { Button } from "@/components/ui/button";
 import {
@@ -295,13 +296,14 @@ const BasicCourseForm = () => {
                   Course Thumbnail
                 </FormLabel>
                 <FormControl>
-                  <Input
+                  <DNDFileUploader />
+                  {/* <Input
                     type="file"
                     accept="image/*"
                     onChange={(e) =>
                       field.onChange(e.target.files?.[0]?.name || "")
                     }
-                  />
+                  /> */}
                 </FormControl>
                 <FormMessage />
               </FormItem>

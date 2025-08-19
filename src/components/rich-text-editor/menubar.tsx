@@ -266,9 +266,9 @@ const Menubar = ({ editor, className }: MenubarProps) => {
                 transition={transition as any}
                 className={cn(
                   "relative flex items-center rounded-none px-3 py-2",
-                  "text-sm font-medium transition-colors duration-300",
+                  "text-xs font-medium transition-colors duration-300",
                   isActive
-                    ? "bg-[#1F9CFE] text-white rounded-lg"
+                    ? "bg-primary rounded"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
@@ -276,12 +276,12 @@ const Menubar = ({ editor, className }: MenubarProps) => {
                 <AnimatePresence initial={false}>
                   {isActive && (
                     <motion.span
-                      variants={spanVariants as any}
+                      variants={spanVariants}
                       initial="initial"
                       animate="animate"
                       exit="exit"
                       transition={transition as any}
-                      className="overflow-hidden"
+                      className="overflow-hidden text-nowrap"
                     >
                       {item.title}
                     </motion.span>

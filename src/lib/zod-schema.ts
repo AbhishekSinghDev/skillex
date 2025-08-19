@@ -40,3 +40,13 @@ export const CourseCreationSchema = z4.object({
   category: z4.enum(courseCategoryEnum.enumValues, "Invalid course category"),
   status: z4.enum(statusEnum.enumValues, "Invalid course status"),
 });
+
+export const FileUploadSchema = z4.object({
+  fileName: z4.string().min(1, "File name is required"),
+  contentType: z4.string().min(1, "Content type is required"),
+  fileSize: z4.coerce
+    .number()
+    .min(0, "File size must be at least 0")
+    .nonnegative(),
+  isImage: z4.boolean(),
+});

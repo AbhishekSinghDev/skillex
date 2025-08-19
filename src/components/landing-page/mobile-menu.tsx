@@ -9,15 +9,20 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { resourcesDropdownData } from "@/lib/constant";
-import { ChevronDown, ExternalLink, Menu, X } from "lucide-react";
+import { IconX } from "@tabler/icons-react";
+import { ChevronDown, ExternalLink, Menu } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Logo from "../shared/logo";
+import ThemeToggle from "../shared/toggle-theme";
+import { Button } from "../ui/button";
 
 export default function MobileMenu() {
-  const [expandedDropdown, setExpandedDropdown] = useState<string | null>(null);
+  const [expandedDropdown, setExpandedDropdown] = useState<string | null>(
+    "resources"
+  );
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -33,12 +38,9 @@ export default function MobileMenu() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <button
-          className="rounded-md bg-transparent hover:bg-gray-200/50 dark:hover:bg-gray-800/20 md:hidden"
-          aria-label="Toggle menu"
-        >
+        <Button size="icon" variant="outline" className="md:hidden">
           <Menu className="h-6 w-6 text-black dark:text-white" />
-        </button>
+        </Button>
       </SheetTrigger>
       <SheetContent
         side="right"
@@ -48,14 +50,14 @@ export default function MobileMenu() {
         <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
         <SheetHeader className="p-4 border-b flex flex-row items-center justify-between">
           <Logo showBrandName />
-          <SheetClose asChild>
-            <button
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-              aria-label="Close menu"
-            >
-              <X className="h-6 w-6 text-gray-600 dark:text-gray-400" />
-            </button>
-          </SheetClose>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <SheetClose asChild>
+              <Button size="icon" variant="destructive">
+                <IconX className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+              </Button>
+            </SheetClose>
+          </div>
         </SheetHeader>
 
         <nav className="p-4">
@@ -178,46 +180,8 @@ export default function MobileMenu() {
                 </div>
               )}
             </li>
-
-            <li>
-              <Link
-                href="/portfolio"
-                className={`flex items-center py-3 px-4 rounded-lg text-base ${
-                  pathname === "/portfolio"
-                    ? "bg-[#7A7FEE]/10 text-[#7A7FEE]"
-                    : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-                onClick={handleLinkClick}
-              >
-                Portfolio
-              </Link>
-            </li>
-
-            <li>
-              <Link
-                href="/start"
-                className={`flex items-center py-3 px-4 rounded-lg text-base ${
-                  pathname === "/start"
-                    ? "bg-[#7A7FEE]/10 text-[#7A7FEE]"
-                    : "text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                }`}
-                onClick={handleLinkClick}
-              >
-                Start Project
-              </Link>
-            </li>
           </ul>
         </nav>
-
-        <div className="p-4 mt-4 border-t border-gray-200 dark:border-gray-800">
-          <Link
-            href="/contact"
-            className="flex items-center justify-center w-full py-3 px-4 bg-[#7A7FEE] text-white rounded-lg text-base font-medium hover:bg-opacity-90 transition-colors"
-            onClick={handleLinkClick}
-          >
-            Contact Us
-          </Link>
-        </div>
       </SheetContent>
     </Sheet>
   );

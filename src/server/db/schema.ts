@@ -1,4 +1,13 @@
-import { boolean, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+import {
+  boolean,
+  numeric,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { v7 as v7uuid } from "uuid";
 
 export const user = pgTable("user", {
@@ -18,6 +27,10 @@ export const user = pgTable("user", {
     .$defaultFn(() => new Date())
     .notNull(),
 });
+
+export const userRelations = relations(user, ({ many }) => ({
+  courses: many(course),
+}));
 
 export const session = pgTable("session", {
   id: uuid("id")
@@ -64,3 +77,67 @@ export const verification = pgTable("verification", {
   createdAt: timestamp("created_at").$defaultFn(() => new Date()),
   updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
 });
+
+export const statusEnum = pgEnum("status_enum", [
+  "draft",
+  "published",
+  "archived",
+]);
+
+export const courseLevelEnum = pgEnum("course_level_enum", [
+  "beginner",
+  "intermediate",
+  "advanced",
+]);
+
+export const courseCategoryEnum = pgEnum("course_category_enum", [
+  "programming",
+  "web-development",
+  "mobile-development",
+  "data-science",
+  "machine-learning",
+  "artificial-intelligence",
+  "design",
+  "ui-ux-design",
+  "digital-marketing",
+  "business",
+  "photography",
+  "music",
+  "language-learning",
+  "personal-development",
+  "health-fitness",
+  "finance",
+  "others",
+]);
+
+export const course = pgTable("course", {
+  id: uuid("id")
+    .primaryKey()
+    .$defaultFn(() => v7uuid()),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description").notNull(),
+  smallDescription: text("small_description").notNull(),
+  category: courseCategoryEnum("category").notNull(),
+  fileKey: text("file_key").notNull(),
+  price: numeric("price").notNull(),
+  duration: numeric("duration").notNull(),
+  level: courseLevelEnum("level").notNull(),
+  status: statusEnum("status").default("draft").notNull(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export const courseRelations = relations(course, ({ one }) => ({
+  user: one(user, {
+    fields: [course.userId],
+    references: [user.id],
+  }),
+}));

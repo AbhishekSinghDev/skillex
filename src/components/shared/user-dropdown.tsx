@@ -10,15 +10,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
-import {
-  IconBook,
-  IconDashboard,
-  IconHome,
-  IconUserCircle,
-} from "@tabler/icons-react";
+import { IconBook, IconDashboard, IconHome } from "@tabler/icons-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Button } from "../ui/button";
 import Logout from "./logout";
 
 const UserDropdown = () => {
@@ -26,10 +20,19 @@ const UserDropdown = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
-          <IconUserCircle />
-        </Button>
+      <DropdownMenuTrigger>
+        <Avatar>
+          <AvatarImage
+            src={
+              session?.user?.image ??
+              `https://avatar.vercel.sh/${session?.user?.email}`
+            }
+            alt={session?.user?.name}
+          />
+          <AvatarFallback className="rounded-lg">
+            {session?.user?.name?.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
@@ -70,15 +73,15 @@ const UserDropdown = () => {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/admin">
-              <IconDashboard />
-              Dashboard
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
             <Link href="/courses">
               <IconBook />
               Courses
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/admin">
+              <IconDashboard />
+              Dashboard
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>

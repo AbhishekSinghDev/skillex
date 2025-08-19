@@ -38,8 +38,12 @@ export default function MobileMenu() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button size="icon" variant="outline" className="md:hidden">
-          <Menu className="h-6 w-6 text-black dark:text-white" />
+        <Button
+          size="icon"
+          variant="outline"
+          className="md:hidden rounded-full"
+        >
+          <Menu className="h-4 w-4 text-black dark:text-white" />
         </Button>
       </SheetTrigger>
       <SheetContent
@@ -50,11 +54,11 @@ export default function MobileMenu() {
         <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
         <SheetHeader className="p-4 border-b flex flex-row items-center justify-between">
           <Logo showBrandName />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <ThemeToggle />
             <SheetClose asChild>
-              <Button size="icon" variant="destructive">
-                <IconX className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+              <Button size="icon" variant="ghost" className="rounded-full">
+                <IconX className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               </Button>
             </SheetClose>
           </div>

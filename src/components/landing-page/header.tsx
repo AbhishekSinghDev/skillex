@@ -20,7 +20,7 @@ export default async function Header() {
         <div className="flex items-center justify-between">
           <Logo showBrandName />
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-2">
             {/* Desktop Navigation */}
             <DesktopMenu />
 

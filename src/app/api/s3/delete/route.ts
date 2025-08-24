@@ -21,9 +21,9 @@ const aj = arc
   );
 
 export async function DELETE(req: Request) {
-  const session = await requireAdmin();
-
   try {
+    const session = await requireAdmin();
+
     const ajDescision = await aj.protect(req, {
       fingerprint: session.user.id,
     });

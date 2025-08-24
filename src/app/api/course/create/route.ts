@@ -1,15 +1,12 @@
 import { CourseCreationSchema } from "@/lib/zod-schema";
-import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { course } from "@/server/db/schema";
-import { headers } from "next/headers";
+import { requireAdmin } from "@/server/helper";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await requireAdmin();
 
     const body = await req.json();
     const validation = CourseCreationSchema.safeParse(body);

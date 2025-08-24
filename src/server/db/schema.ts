@@ -10,6 +10,8 @@ import {
 } from "drizzle-orm/pg-core";
 import { v7 as v7uuid } from "uuid";
 
+export const roleEnum = pgEnum("role_enum", ["user", "admin"]);
+
 export const user = pgTable("user", {
   id: uuid("id")
     .primaryKey()
@@ -20,6 +22,7 @@ export const user = pgTable("user", {
     .$defaultFn(() => false)
     .notNull(),
   image: text("image"),
+  role: roleEnum("role").notNull().default("user"),
   createdAt: timestamp("created_at")
     .$defaultFn(() => new Date())
     .notNull(),
@@ -141,3 +144,58 @@ export const courseRelations = relations(course, ({ one }) => ({
     references: [user.id],
   }),
 }));
+
+export const note = pgTable("note", {
+  id: uuid("id")
+    .primaryKey()
+    .$defaultFn(() => v7uuid()),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  slug: text("slug").notNull().unique(),
+  isPublished: boolean("is_published").default(false).notNull(),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export const noteRelations = relations(note, ({ one, many }) => ({
+  creator: one(user, {
+    fields: [note.createdBy],
+    references: [user.id],
+  }),
+  attachments: many(noteAttachments),
+}));
+
+export const noteAttachments = pgTable("note_attachment", {
+  id: uuid("id")
+    .primaryKey()
+    .$defaultFn(() => v7uuid()),
+  noteId: uuid("note_id")
+    .notNull()
+    .references(() => note.id, { onDelete: "cascade" }),
+  fileName: text("file_name").notNull(),
+  fileKey: text("file_key").notNull(),
+  fileSize: numeric("file_size"),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export const noteAttachmentRelations = relations(
+  noteAttachments,
+  ({ one }) => ({
+    note: one(note, {
+      fields: [noteAttachments.noteId],
+      references: [note.id],
+    }),
+  })
+);

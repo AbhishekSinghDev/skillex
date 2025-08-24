@@ -3,12 +3,13 @@ import "server-only";
 import { env } from "@/env";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { emailOTP } from "better-auth/plugins";
+import { customSession, emailOTP } from "better-auth/plugins";
 import { db } from "./db";
 
 import LoginEmailTemplate from "@/components/templates/login-email-template";
 import { EMAIL_LOGIN_OTP_LENGTH } from "@/lib/constant";
 import * as schema from "@/server/db/schema";
+import { eq } from "drizzle-orm";
 import { resend } from "./resend";
 
 export const auth = betterAuth({
@@ -43,6 +44,21 @@ export const auth = betterAuth({
           }),
         });
       },
+    }),
+    customSession(async ({ user, session }) => {
+      const [userRole] = await db
+        .select()
+        .from(schema.user)
+        .where(eq(schema.user.id, user.id))
+        .limit(1);
+
+      return {
+        user: {
+          ...user,
+          role: userRole.role,
+        },
+        session,
+      };
     }),
   ],
   socialProviders: {

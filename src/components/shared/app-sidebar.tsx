@@ -4,6 +4,7 @@ import {
   IconBook,
   IconDashboard,
   IconHelp,
+  IconNotes,
   IconSearch,
   IconSettings,
 } from "@tabler/icons-react";
@@ -25,16 +26,16 @@ import {
 import Logo from "./logo";
 
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Dashboard",
       url: "/admin",
       icon: IconDashboard,
+    },
+    {
+      title: "Notes",
+      url: "/admin/notes",
+      icon: IconNotes,
     },
     {
       title: "Courses",

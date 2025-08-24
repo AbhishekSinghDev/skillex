@@ -21,6 +21,14 @@ export const CourseCreationSchema = z4.object({
     .string()
     .min(2, "Title must be at least 2 characters long")
     .max(100, "Title must be at most 100 characters long"),
+  slug: z4
+    .string()
+    .min(2, "Slug must be at least 2 characters long")
+    .max(100, "Slug must be at most 100 characters long")
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Slug must be lowercase letters, numbers, and hyphens only"
+    ),
   description: z4
     .string()
     .min(10, "Description must be at least 10 characters long")
@@ -49,4 +57,21 @@ export const FileUploadSchema = z4.object({
     .min(0, "File size must be at least 0")
     .nonnegative(),
   isImage: z4.boolean(),
+});
+
+export const NoteCreationSchema = z4.object({
+  title: z4
+    .string()
+    .min(2, "Title must be at least 2 characters long")
+    .max(100, "Title must be at most 100 characters long"),
+  content: z4.string().min(10, "Content must be at least 10 characters long"),
+  slug: z4
+    .string()
+    .min(2, "Slug must be at least 2 characters long")
+    .max(100, "Slug must be at most 100 characters long")
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Slug must be lowercase letters, numbers, and hyphens only"
+    ),
+  isPublished: z4.boolean().default(false),
 });

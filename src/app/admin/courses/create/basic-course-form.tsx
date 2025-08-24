@@ -9,6 +9,7 @@ import {
   FileText,
   Image,
   Layers,
+  Link,
   Tag,
   Type,
 } from "lucide-react";
@@ -21,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -35,18 +37,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { generateSlug } from "@/lib/utils";
 import { CourseCreationSchema } from "@/lib/zod-schema";
 import {
   courseCategoryEnum,
   courseLevelEnum,
   statusEnum,
 } from "@/server/db/schema";
+import { IconSparkles } from "@tabler/icons-react";
 
 const BasicCourseForm = () => {
   const form = useForm<z.infer<typeof CourseCreationSchema>>({
     resolver: zodResolver(CourseCreationSchema),
     defaultValues: {
       title: "",
+      slug: "",
       description: "<p>Hello World! 🌎️</p>",
       duration: undefined,
       price: undefined,
@@ -76,8 +81,51 @@ const BasicCourseForm = () => {
                   Course Title
                 </FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter course title" {...field} />
+                  <Input
+                    placeholder="Enter course title"
+                    {...field}
+                    onChange={(e) => {
+                      field.onChange(e);
+                    }}
+                  />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Slug Field */}
+          <FormField
+            control={form.control}
+            name="slug"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2 text-sm font-medium">
+                  <Link className="w-4 h-4" />
+                  URL Slug
+                </FormLabel>
+                <div className="flex items-center gap-2">
+                  <FormControl>
+                    <Input placeholder="course-url-slug" {...field} disabled />
+                  </FormControl>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      form.setValue(
+                        "slug",
+                        generateSlug(form.getValues("title"))
+                      )
+                    }
+                  >
+                    <IconSparkles />
+                    Generate Slug
+                  </Button>
+                </div>
+                <FormDescription>
+                  This will be used in the URL. Use lowercase letters, numbers,
+                  and hyphens only.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -120,11 +168,6 @@ const BasicCourseForm = () => {
                     value={field.value}
                     onChange={field.onChange}
                   />
-                  {/* <Textarea
-                    placeholder="Detailed description of your course content, objectives, and what students will learn"
-                    className="resize-none h-32"
-                    {...field}
-                  /> */}
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -296,14 +339,10 @@ const BasicCourseForm = () => {
                   Course Thumbnail
                 </FormLabel>
                 <FormControl>
-                  <DNDFileUploader />
-                  {/* <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) =>
-                      field.onChange(e.target.files?.[0]?.name || "")
-                    }
-                  /> */}
+                  <DNDFileUploader
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

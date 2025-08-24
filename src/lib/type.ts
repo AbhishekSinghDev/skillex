@@ -36,3 +36,8 @@ export interface LandingPageProps {
   showHeader?: boolean;
   showFooter?: boolean;
 }
+
+export type ApiResponse = {
+  message: string;
+  status: "success" | "error";
+};

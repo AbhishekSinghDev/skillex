@@ -5,11 +5,43 @@ import { NextResponse } from "next/server";
 
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
+import { arc, detectBot, fixedWindow } from "@/server/arcjet";
+import { requireAdmin } from "@/server/helper";
 import { s3 } from "@/server/s3";
 import { v4 as v4uuid } from "uuid";
 
+const aj = arc
+  .withRule(
+    detectBot({
+      mode: "LIVE",
+      allow: [],
+    })
+  )
+  .withRule(
+    fixedWindow({
+      mode: "LIVE",
+      window: "1m",
+      max: 10,
+    })
+  );
+
 export async function POST(req: Request) {
+  const session = await requireAdmin();
+
   try {
+    const ajDescision = await aj.protect(req, {
+      fingerprint: session.user.id,
+    });
+
+    if (ajDescision.isDenied()) {
+      return NextResponse.json(
+        {
+          error: "You are not allowed to upload files",
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const validation = FileUploadSchema.safeParse(body);
 

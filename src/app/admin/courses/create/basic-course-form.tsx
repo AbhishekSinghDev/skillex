@@ -10,6 +10,7 @@ import {
   Image,
   Layers,
   Link,
+  Loader2,
   Tag,
   Type,
 } from "lucide-react";
@@ -44,7 +45,9 @@ import {
   courseLevelEnum,
   statusEnum,
 } from "@/server/db/schema";
-import { IconSparkles } from "@tabler/icons-react";
+import { IconPlus, IconSparkles } from "@tabler/icons-react";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const BasicCourseForm = () => {
   const form = useForm<z.infer<typeof CourseCreationSchema>>({
@@ -62,8 +65,32 @@ const BasicCourseForm = () => {
     },
   });
 
+  const { mutate: createCourse, isPending: isCreatingCourse } = useMutation({
+    mutationKey: ["create-course"],
+    mutationFn: async (data: z.infer<typeof CourseCreationSchema>) => {
+      const response = await fetch("/api/course/create", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create course");
+      }
+
+      return response.json();
+    },
+  });
+
   const onSubmit = (values: z.infer<typeof CourseCreationSchema>) => {
-    console.log(values);
+    createCourse(values, {
+      onSuccess: () => {
+        toast.success("Course created successfully!");
+        form.reset();
+      },
+      onError: () => {
+        toast.error("Failed to create course");
+      },
+    });
   };
 
   return (
@@ -352,6 +379,11 @@ const BasicCourseForm = () => {
           {/* Submit Button */}
           <div className="flex justify-end pt-6">
             <Button type="submit" size="lg" className="px-8">
+              {isCreatingCourse ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <IconPlus />
+              )}
               Create Course
             </Button>
           </div>

@@ -1,16 +1,18 @@
 import { AppSidebar } from "@/components/shared/app-sidebar";
 import { SiteHeader } from "@/components/shared/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { auth } from "@/server/auth";
-import { headers } from "next/headers";
+import { requireAdmin } from "@/server/helper";
 import { redirect } from "next/navigation";
 
 const AdminLayout = async ({ children }: { children: React.ReactNode }) => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (session?.user.role !== "admin") redirect("/");
+  try {
+    const session = await requireAdmin();
+    if (session.user.role !== "admin") {
+      redirect("/");
+    }
+  } catch (error) {
+    redirect("/");
+  }
 
   return (
     <SidebarProvider

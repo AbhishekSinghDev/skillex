@@ -8,6 +8,7 @@ import { Card, CardContent } from "../ui/card";
 import {
   RenderEmptyState,
   RenderErrorState,
+  RenderMultipleFilesState,
   RenderSuccessState,
   RenderUploadingState,
 } from "./render-state";
@@ -23,15 +24,31 @@ interface UploaderState {
   isDeleting: boolean;
   error: boolean;
   objectUrl?: string;
-  fileType: "image" | "video";
+  fileType: "image" | "video" | "document";
+}
+
+interface MultipleFileState {
+  id: string;
+  file: File;
+  uploading: boolean;
+  progress: number;
+  key?: string;
+  error: boolean;
+  uploaded: boolean;
 }
 
 interface DNDFileUploaderProps {
   value?: string;
-  onChange?: (value: string) => void;
+  onChange?: (value: string, fileName?: string, fileSize?: number) => void;
+  fileType: "image" | "video" | "document";
 }
 
-const DNDFileUploader = ({ value, onChange }: DNDFileUploaderProps) => {
+const DNDFileUploader = ({
+  value,
+  onChange,
+  fileType,
+}: DNDFileUploaderProps) => {
+  // Single file state (for image/video)
   const [fileState, setFileState] = useState<UploaderState>({
     error: false,
     file: null,
@@ -40,17 +57,32 @@ const DNDFileUploader = ({ value, onChange }: DNDFileUploaderProps) => {
     progress: 0,
     isDeleting: false,
     objectUrl: undefined,
-    fileType: "image",
+    fileType: fileType,
     key: value,
   });
 
-  const uploadFile = async (file: File) => {
-    setFileState((prev) => ({
-      ...prev,
-      uploading: true,
-      progress: 0,
-      error: false,
-    }));
+  // Multiple files state (for documents)
+  const [multipleFiles, setMultipleFiles] = useState<MultipleFileState[]>([]);
+
+  const isMultipleMode = fileType === "document";
+
+  const uploadFile = async (file: File, fileId?: string) => {
+    if (isMultipleMode && fileId) {
+      setMultipleFiles((prev) =>
+        prev.map((f) =>
+          f.id === fileId
+            ? { ...f, uploading: true, progress: 0, error: false }
+            : f
+        )
+      );
+    } else {
+      setFileState((prev) => ({
+        ...prev,
+        uploading: true,
+        progress: 0,
+        error: false,
+      }));
+    }
 
     try {
       // 1. Request a presigned URL from the backend
@@ -69,13 +101,23 @@ const DNDFileUploader = ({ value, onChange }: DNDFileUploaderProps) => {
 
       if (!presignedResponse.ok) {
         toast.error("Failed to get presigned URL");
-        setFileState((prev) => ({
-          ...prev,
-          uploading: false,
-          progress: 0,
-          error: true,
-        }));
 
+        if (isMultipleMode && fileId) {
+          setMultipleFiles((prev) =>
+            prev.map((f) =>
+              f.id === fileId
+                ? { ...f, uploading: false, progress: 0, error: true }
+                : f
+            )
+          );
+        } else {
+          setFileState((prev) => ({
+            ...prev,
+            uploading: false,
+            progress: 0,
+            error: true,
+          }));
+        }
         return;
       }
 
@@ -89,23 +131,49 @@ const DNDFileUploader = ({ value, onChange }: DNDFileUploaderProps) => {
           if (event.lengthComputable) {
             const percentCompleted = (event.loaded / event.total) * 100;
 
-            setFileState((prev) => ({
-              ...prev,
-              progress: Math.round(percentCompleted),
-            }));
+            if (isMultipleMode && fileId) {
+              setMultipleFiles((prev) =>
+                prev.map((f) =>
+                  f.id === fileId
+                    ? { ...f, progress: Math.round(percentCompleted) }
+                    : f
+                )
+              );
+            } else {
+              setFileState((prev) => ({
+                ...prev,
+                progress: Math.round(percentCompleted),
+              }));
+            }
           }
         };
 
         xhr.onload = () => {
           if (xhr.status === 200 || xhr.status === 204) {
-            setFileState((prev) => ({
-              ...prev,
-              uploading: false,
-              progress: 100,
-              key: key,
-            }));
-
-            onChange?.(key);
+            if (isMultipleMode && fileId) {
+              setMultipleFiles((prev) =>
+                prev.map((f) =>
+                  f.id === fileId
+                    ? {
+                        ...f,
+                        uploading: false,
+                        progress: 100,
+                        key: key,
+                        uploaded: true,
+                      }
+                    : f
+                )
+              );
+              onChange?.(key, file.name, file.size);
+            } else {
+              setFileState((prev) => ({
+                ...prev,
+                uploading: false,
+                progress: 100,
+                key: key,
+              }));
+              onChange?.(key);
+            }
 
             toast.success("File uploaded successfully");
             resolve();
@@ -126,70 +194,115 @@ const DNDFileUploader = ({ value, onChange }: DNDFileUploaderProps) => {
     } catch (error) {
       console.error("File upload failed:", error);
       toast.error("Something went wrong");
-      setFileState((prev) => ({
-        ...prev,
-        progress: 0,
-        error: true,
-        uploading: false,
-      }));
+
+      if (isMultipleMode && fileId) {
+        setMultipleFiles((prev) =>
+          prev.map((f) =>
+            f.id === fileId
+              ? { ...f, progress: 0, error: true, uploading: false }
+              : f
+          )
+        );
+      } else {
+        setFileState((prev) => ({
+          ...prev,
+          progress: 0,
+          error: true,
+          uploading: false,
+        }));
+      }
     }
   };
 
-  const deleteFile = async () => {
-    if (!fileState.key || fileState.isDeleting || !fileState.objectUrl) return;
+  const deleteFile = async (fileId?: string) => {
+    if (isMultipleMode && fileId) {
+      const fileToDelete = multipleFiles.find((f) => f.id === fileId);
+      if (!fileToDelete?.key) return;
 
-    setFileState((prev) => ({
-      ...prev,
-      isDeleting: true,
-    }));
+      try {
+        const response = await fetch("/api/s3/delete", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            key: fileToDelete.key,
+          }),
+        });
 
-    try {
-      const response = await fetch("/api/s3/delete", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "app lication/json",
-        },
-        body: JSON.stringify({
-          key: fileState.key,
-        }),
-      });
+        if (!response.ok) {
+          toast.error("Failed to delete file");
+          return;
+        }
 
-      if (!response.ok) {
+        setMultipleFiles((prev) => prev.filter((f) => f.id !== fileId));
+        toast.success("File deleted successfully");
+      } catch (error) {
+        console.error("File deletion failed:", error);
         toast.error("Failed to delete file");
+      }
+    } else {
+      if (!fileState.key || fileState.isDeleting || !fileState.objectUrl)
         return;
-      }
 
-      // Clean up object URL
-      if (fileState.objectUrl && !fileState.objectUrl.startsWith("http")) {
-        URL.revokeObjectURL(fileState.objectUrl);
-      }
-
-      onChange?.(fileState.key);
-
-      setFileState({
-        error: false,
-        file: null,
-        id: null,
-        uploading: false,
-        progress: 0,
-        isDeleting: false,
-        objectUrl: undefined,
-        fileType: "image",
-      });
-
-      toast.success("File deleted successfully");
-    } catch (error) {
-      console.error("File deletion failed:", error);
-      toast.error("Failed to delete file");
       setFileState((prev) => ({
         ...prev,
-        isDeleting: false,
+        isDeleting: true,
       }));
+
+      try {
+        const response = await fetch("/api/s3/delete", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            key: fileState.key,
+          }),
+        });
+
+        if (!response.ok) {
+          toast.error("Failed to delete file");
+          return;
+        }
+
+        // Clean up object URL
+        if (fileState.objectUrl && !fileState.objectUrl.startsWith("http")) {
+          URL.revokeObjectURL(fileState.objectUrl);
+        }
+
+        onChange?.(fileState.key);
+
+        setFileState({
+          error: false,
+          file: null,
+          id: null,
+          uploading: false,
+          progress: 0,
+          isDeleting: false,
+          objectUrl: undefined,
+          fileType: fileType,
+        });
+
+        toast.success("File deleted successfully");
+      } catch (error) {
+        console.error("File deletion failed:", error);
+        toast.error("Failed to delete file");
+        setFileState((prev) => ({
+          ...prev,
+          isDeleting: false,
+        }));
+      }
     }
   };
 
-  const retryUpload = () => {
-    if (fileState.file) {
+  const retryUpload = (fileId?: string) => {
+    if (isMultipleMode && fileId) {
+      const fileToRetry = multipleFiles.find((f) => f.id === fileId);
+      if (fileToRetry) {
+        uploadFile(fileToRetry.file, fileId);
+      }
+    } else if (fileState.file) {
       uploadFile(fileState.file);
     }
   };
@@ -198,27 +311,49 @@ const DNDFileUploader = ({ value, onChange }: DNDFileUploaderProps) => {
     (acceptedFiles: File[]) => {
       if (acceptedFiles.length === 0) return;
 
-      if (fileState.objectUrl && !fileState.objectUrl.startsWith("http")) {
-        URL.revokeObjectURL(fileState.objectUrl);
+      if (isMultipleMode) {
+        // Handle multiple files for documents
+        const newFiles: MultipleFileState[] = acceptedFiles.map((file) => ({
+          id: uuid(),
+          file: file,
+          uploading: false,
+          progress: 0,
+          error: false,
+          uploaded: false,
+        }));
+
+        setMultipleFiles((prev) => [...prev, ...newFiles]);
+
+        // Upload all files
+        newFiles.forEach((fileState) => {
+          uploadFile(fileState.file, fileState.id);
+        });
+      } else {
+        // Handle single file for images/videos
+        if (fileState.objectUrl && !fileState.objectUrl.startsWith("http")) {
+          URL.revokeObjectURL(fileState.objectUrl);
+        }
+
+        const file = acceptedFiles[0];
+        const fileTypeDetected = file.type.startsWith("image/")
+          ? "image"
+          : "video";
+
+        setFileState({
+          file: file,
+          uploading: false,
+          progress: 0,
+          objectUrl: URL.createObjectURL(file),
+          error: false,
+          id: uuid(),
+          isDeleting: false,
+          fileType: fileTypeDetected,
+        });
+
+        uploadFile(file);
       }
-
-      const file = acceptedFiles[0];
-      const fileType = file.type.startsWith("image/") ? "image" : "video";
-
-      setFileState({
-        file: file,
-        uploading: false,
-        progress: 0,
-        objectUrl: URL.createObjectURL(file),
-        error: false,
-        id: uuid(),
-        isDeleting: false,
-        fileType,
-      });
-
-      uploadFile(file);
     },
-    [fileState.objectUrl]
+    [fileState.objectUrl, isMultipleMode, multipleFiles]
   );
 
   const rejectedFiles = (fileRejections: FileRejection[]) => {
@@ -230,6 +365,18 @@ const DNDFileUploader = ({ value, onChange }: DNDFileUploaderProps) => {
   };
 
   const renderContent = () => {
+    if (isMultipleMode) {
+      return (
+        <RenderMultipleFilesState
+          files={multipleFiles}
+          onRetry={retryUpload}
+          onDelete={deleteFile}
+          isDragActive={isDragActive}
+        />
+      );
+    }
+
+    // Single file mode rendering (existing logic)
     if (fileState.uploading) {
       return (
         <RenderUploadingState
@@ -242,7 +389,7 @@ const DNDFileUploader = ({ value, onChange }: DNDFileUploaderProps) => {
     if (fileState.error) {
       return (
         <RenderErrorState
-          onRetry={retryUpload}
+          onRetry={() => retryUpload()}
           fileName={fileState.file?.name}
         />
       );
@@ -254,29 +401,45 @@ const DNDFileUploader = ({ value, onChange }: DNDFileUploaderProps) => {
           objectUrl={fileState.objectUrl}
           fileName={fileState.file?.name || ""}
           fileType={fileState.fileType}
-          onDelete={deleteFile}
+          onDelete={() => deleteFile()}
           isDeleting={fileState.isDeleting}
         />
       );
     }
 
-    return <RenderEmptyState isDragActive={isDragActive} />;
+    return <RenderEmptyState isDragActive={isDragActive} fileType={fileType} />;
+  };
+
+  const getAcceptedTypes = () => {
+    switch (fileType) {
+      case "image":
+        return { "image/*": [] };
+      case "video":
+        return { "video/*": [] };
+      case "document":
+        return { "application/pdf": [".pdf"] };
+      default:
+        return {
+          "image/*": [],
+          "video/*": [],
+          "application/pdf": [".pdf"],
+        };
+    }
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      "image/*": [],
-      "video/*": [],
-    },
-    maxFiles: 1,
-    multiple: false,
+    // @ts-ignore
+    accept: getAcceptedTypes(),
+    maxFiles: isMultipleMode ? undefined : 1,
+    multiple: isMultipleMode,
     maxSize: 10485760, // 10 MB
     onDropRejected(fileRejections) {
       rejectedFiles(fileRejections);
     },
     disabled:
-      fileState.uploading || fileState.isDeleting || !!fileState.objectUrl,
+      !isMultipleMode &&
+      (fileState.uploading || fileState.isDeleting || !!fileState.objectUrl),
   });
 
   useEffect(() => {
@@ -288,12 +451,14 @@ const DNDFileUploader = ({ value, onChange }: DNDFileUploaderProps) => {
   }, [fileState.objectUrl]);
 
   const isInteractive =
-    !fileState.uploading && !fileState.isDeleting && !fileState.objectUrl;
+    isMultipleMode ||
+    (!fileState.uploading && !fileState.isDeleting && !fileState.objectUrl);
 
   return (
     <Card
       className={cn(
-        "relative border-2 border-dashed transition-colors duration-200 ease-in-out w-full h-64",
+        "relative border-2 border-dashed transition-colors duration-200 ease-in-out w-full",
+        isMultipleMode ? "min-h-64" : "h-64",
         isDragActive && isInteractive
           ? "border-primary bg-primary/10 border-solid"
           : "border-border hover:border-primary",

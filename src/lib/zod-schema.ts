@@ -74,4 +74,17 @@ export const NoteCreationSchema = z4.object({
       "Slug must be lowercase letters, numbers, and hyphens only"
     ),
   isPublished: z4.boolean().default(false),
+  attachments: z4
+    .array(
+      z4.object({
+        fileName: z4.string().min(1, "File name is required"),
+        fileKey: z4.string().min(1, "File key is required"),
+        fileSize: z4.coerce
+          .number()
+          .min(0, "File size must be at least 0")
+          .nonnegative(),
+      })
+    )
+    .optional()
+    .default([]),
 });

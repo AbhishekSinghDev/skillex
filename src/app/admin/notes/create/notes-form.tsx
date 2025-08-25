@@ -1,10 +1,18 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BookOpen, FileText, Link, Type } from "lucide-react";
+import {
+  BookOpen,
+  FileText,
+  Link,
+  Loader2,
+  Paperclip,
+  Type,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import DNDFileUploader from "@/components/dnd-file-uploader/uploader";
 import RichTextEditor from "@/components/rich-text-editor/editor";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,6 +29,8 @@ import { Input } from "@/components/ui/input";
 import { generateSlug } from "@/lib/utils";
 import { NoteCreationSchema } from "@/lib/zod-schema";
 import { IconSparkles } from "@tabler/icons-react";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const NotesForm = () => {
   const form = useForm<z.infer<typeof NoteCreationSchema>>({
@@ -30,11 +40,50 @@ const NotesForm = () => {
       content: "<p>Start writing your note...</p>",
       slug: "",
       isPublished: false,
+      attachments: [],
+    },
+  });
+
+  const { mutate: createNote, isPending: isCreatingNote } = useMutation({
+    mutationKey: ["create-note"],
+    mutationFn: async (data: z.infer<typeof NoteCreationSchema>) => {
+      const response = await fetch("/api/admin/note/create", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create note");
+      }
+
+      return response.json();
     },
   });
 
   const onSubmit = (values: z.infer<typeof NoteCreationSchema>) => {
-    console.log(values);
+    createNote(values, {
+      onSuccess: () => {
+        toast.success("Note created successfully!");
+        form.reset();
+      },
+      onError: () => {
+        toast.error("Failed to create note");
+      },
+    });
+  };
+
+  const handleAttachmentAdd = (
+    fileKey: string,
+    fileName: string,
+    fileSize: number
+  ) => {
+    const currentAttachments = form.getValues("attachments") || [];
+    const newAttachment = {
+      fileName,
+      fileKey,
+      fileSize,
+    };
+    form.setValue("attachments", [...currentAttachments, newAttachment]);
   };
 
   return (
@@ -123,6 +172,40 @@ const NotesForm = () => {
             )}
           />
 
+          {/* Attachments Field */}
+          <FormField
+            control={form.control}
+            name="attachments"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2 text-sm font-medium">
+                  <Paperclip className="w-4 h-4" />
+                  PDF Attachments
+                </FormLabel>
+                <FormControl>
+                  <DNDFileUploader
+                    value=""
+                    onChange={(
+                      fileKey: string,
+                      fileName?: string,
+                      fileSize?: number
+                    ) => {
+                      if (fileKey && fileName && fileSize) {
+                        handleAttachmentAdd(fileKey, fileName, fileSize);
+                      }
+                    }}
+                    fileType="document"
+                  />
+                </FormControl>
+                <FormDescription>
+                  Upload PDF files as attachments. Maximum file size: 10MB per
+                  file.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* Published Status */}
           <FormField
             control={form.control}
@@ -150,8 +233,16 @@ const NotesForm = () => {
 
           {/* Submit Button */}
           <div className="flex justify-end pt-6">
-            <Button type="submit" size="lg" className="px-8">
-              Create Note
+            <Button
+              type="submit"
+              size="lg"
+              className="px-8"
+              disabled={isCreatingNote}
+            >
+              {isCreatingNote && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {isCreatingNote ? "Creating..." : "Create Note"}
             </Button>
           </div>
         </form>

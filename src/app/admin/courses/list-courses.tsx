@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import CourseCard from "./course-card";
 
 const fetchCourses = async (): Promise<{ courses: ListCourse[] }> => {
-  const response = await fetch("/api/course");
+  const response = await fetch("/api/admin/course");
 
   if (!response.ok) {
     throw new Error("Failed to fetch courses");

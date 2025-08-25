@@ -68,7 +68,7 @@ const BasicCourseForm = () => {
   const { mutate: createCourse, isPending: isCreatingCourse } = useMutation({
     mutationKey: ["create-course"],
     mutationFn: async (data: z.infer<typeof CourseCreationSchema>) => {
-      const response = await fetch("/api/course/create", {
+      const response = await fetch("/api/admin/course/create", {
         method: "POST",
         body: JSON.stringify(data),
       });
@@ -369,6 +369,7 @@ const BasicCourseForm = () => {
                   <DNDFileUploader
                     value={field.value}
                     onChange={field.onChange}
+                    fileType="image"
                   />
                 </FormControl>
                 <FormMessage />

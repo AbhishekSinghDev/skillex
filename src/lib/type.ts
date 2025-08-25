@@ -47,3 +47,16 @@ export type ListCourse = Omit<
   typeof course.$inferSelect,
   "description" | "userId"
 >;
+
+export type ListNote = {
+  id: string;
+  title: string;
+  slug: string;
+  isPublished: boolean;
+  attachments: {
+    id: string;
+    fileKey: string;
+  }[];
+  createdAt: Date;
+  updatedAt: Date;
+};

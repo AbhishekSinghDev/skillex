@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 import {
   IconBook,
   IconDashboard,
@@ -19,10 +20,12 @@ import {
   IconVideoPlus,
 } from "@tabler/icons-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import Logout from "./logout";
 
 const UserDropdown = () => {
+  const pathName = usePathname();
   const { data: session } = authClient.useSession();
 
   const isAdmin = session?.user.role === "admin";
@@ -76,20 +79,33 @@ const UserDropdown = () => {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/">
-              <IconHome />
+            <Link
+              href="/"
+              className={cn(pathName === "/" && "font-bold bg-accent")}
+            >
+              <IconHome className={cn(pathName === "/" && "text-foreground")} />
               Home
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/notes">
-              <IconBook />
+            <Link
+              href="/notes"
+              className={cn(pathName === "/notes" && "font-bold bg-accent")}
+            >
+              <IconBook
+                className={cn(pathName === "/notes" && "text-foreground")}
+              />
               Notes
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/courses">
-              <IconDeviceTvOld />
+            <Link
+              href="/courses"
+              className={cn(pathName === "/courses" && "font-bold bg-accent")}
+            >
+              <IconDeviceTvOld
+                className={cn(pathName === "/courses" && "text-foreground")}
+              />
               Courses
             </Link>
           </DropdownMenuItem>

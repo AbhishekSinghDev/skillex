@@ -52,6 +52,7 @@ export type ListNote = {
   id: string;
   title: string;
   slug: string;
+  content: string;
   isPublished: boolean;
   attachments: {
     id: string;

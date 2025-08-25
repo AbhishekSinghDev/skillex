@@ -1,3 +1,11 @@
+import { Button } from "@/components/ui/button";
+import {
+  ChevronLeft,
+  ChevronRight,
+  RotateCw,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface PDFJSViewerProps {
@@ -16,6 +24,8 @@ const PDFViewer: React.FC<PDFJSViewerProps> = ({
   const [totalPages, setTotalPages] = useState(0);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [scale, setScale] = useState(1);
+  const [rotation, setRotation] = useState(0);
 
   useEffect(() => {
     // Load PDF.js from CDN
@@ -57,7 +67,7 @@ const PDFViewer: React.FC<PDFJSViewerProps> = ({
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
 
-    const viewport = page.getViewport({ scale: 1.5 });
+    const viewport = page.getViewport({ scale, rotation });
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
@@ -74,90 +84,107 @@ const PDFViewer: React.FC<PDFJSViewerProps> = ({
     }
   };
 
+  const handleZoomIn = () => {
+    const newScale = Math.min(scale + 0.2, 3);
+    setScale(newScale);
+    renderPage(currentPage);
+  };
+
+  const handleZoomOut = () => {
+    const newScale = Math.max(scale - 0.2, 0.5);
+    setScale(newScale);
+    renderPage(currentPage);
+  };
+
+  const handleRotate = () => {
+    const newRotation = (rotation + 90) % 360;
+    setRotation(newRotation);
+    renderPage(currentPage);
+  };
+
+  const handleFitToWidth = () => {
+    setScale(1.0);
+    renderPage(currentPage);
+  };
+
   if (loading) {
     return (
-      <div style={{ padding: "20px", textAlign: "center" }}>Loading PDF...</div>
+      <div className="flex items-center justify-center p-8">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-muted-foreground">Loading PDF...</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div
-      style={{
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-        overflow: "hidden",
-        width,
-        height,
-      }}
-    >
-      {/* Navigation */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: "10px",
-          backgroundColor: "#f5f5f5",
-          borderBottom: "1px solid #ddd",
-        }}
-      >
-        <button
-          onClick={() => goToPage(currentPage - 1)}
-          disabled={currentPage <= 1}
-          style={{
-            padding: "8px 16px",
-            marginRight: "10px",
-            border: "none",
-            borderRadius: "4px",
-            backgroundColor: currentPage <= 1 ? "#ccc" : "#007bff",
-            color: "white",
-            cursor: currentPage <= 1 ? "not-allowed" : "pointer",
-          }}
-        >
-          Previous
-        </button>
+    <div className="w-full bg-background" style={{ width, height }}>
+      {/* Toolbar */}
+      <div className="flex justify-between items-center p-4 bg-muted/30 sticky top-0 z-10">
+        {/* Navigation Controls */}
+        <div className="flex items-center space-x-2">
+          <Button
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage <= 1}
+            size="icon"
+            variant="default"
+          >
+            <ChevronLeft />
+          </Button>
 
-        <span style={{ margin: "0 15px" }}>
-          Page {currentPage} of {totalPages}
-        </span>
+          <div className="px-3 py-2 bg-background rounded-lg border border-border text-sm">
+            <span className="text-foreground font-medium">
+              {currentPage} / {totalPages}
+            </span>
+          </div>
 
-        <button
-          onClick={() => goToPage(currentPage + 1)}
-          disabled={currentPage >= totalPages}
-          style={{
-            padding: "8px 16px",
-            marginLeft: "10px",
-            border: "none",
-            borderRadius: "4px",
-            backgroundColor: currentPage >= totalPages ? "#ccc" : "#007bff",
-            color: "white",
-            cursor: currentPage >= totalPages ? "not-allowed" : "pointer",
-          }}
-        >
-          Next
-        </button>
+          <Button
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            size="icon"
+            variant="default"
+          >
+            <ChevronRight />
+          </Button>
+        </div>
+
+        {/* Zoom and Action Controls */}
+        <div className="flex items-center space-x-2">
+          <Button onClick={handleZoomOut} size="icon" variant="secondary">
+            <ZoomOut size={16} />
+          </Button>
+
+          <div className="px-3 py-2 bg-background rounded-lg border border-border text-sm min-w-[60px] text-center">
+            <span className="text-foreground font-medium">
+              {Math.round(scale * 100)}%
+            </span>
+          </div>
+
+          <Button onClick={handleZoomIn} size="icon" variant="secondary">
+            <ZoomIn size={16} />
+          </Button>
+
+          <Button
+            onClick={handleRotate}
+            size="icon"
+            variant="secondary"
+            title="Rotate"
+          >
+            <RotateCw size={16} />
+          </Button>
+        </div>
       </div>
 
       {/* PDF Canvas */}
       <div
+        className="overflow-auto flex justify-center bg-background p-4"
         style={{
           height:
-            typeof height === "number" ? height - 60 : `calc(${height} - 60px)`,
-          overflow: "auto",
-          display: "flex",
-          justifyContent: "center",
-          backgroundColor: "#f8f9fa",
-          padding: "20px",
+            typeof height === "number" ? height - 72 : `calc(${height} - 72px)`,
         }}
       >
-        <canvas
-          ref={canvasRef}
-          style={{
-            maxWidth: "100%",
-            height: "fit-content",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-          }}
-        />
+        <canvas ref={canvasRef} className="max-w-full h-fit shadow-sm" />
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { course } from "@/server/db/schema";
 import type React from "react";
 
 // Update the ProjectType interface to match our new data structure
@@ -41,3 +42,8 @@ export type ApiResponse = {
   message: string;
   status: "success" | "error";
 };
+
+export type ListCourse = Omit<
+  typeof course.$inferSelect,
+  "description" | "userId"
+>;

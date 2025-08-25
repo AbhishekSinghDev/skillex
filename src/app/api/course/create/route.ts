@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       price: String(data.price),
       duration: String(data.duration),
       level: data.level,
-      userId: session?.user.id as string,
+      userId: session.user.id,
     });
 
     return NextResponse.json(

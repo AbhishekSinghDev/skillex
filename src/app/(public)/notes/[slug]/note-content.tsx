@@ -2,6 +2,7 @@
 
 import RichTextRenderer from "@/components/rich-text-editor/renderer";
 import PDFViewer from "@/components/shared/pdf-viewer";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ListNote } from "@/lib/type";
 import { constructFileUrl } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -35,6 +36,8 @@ const NoteContent = ({ slug }: { slug: string }) => {
     retry: 1,
   });
 
+  const isMobile = useIsMobile();
+
   if (isLoading) return <NoteContentSkeleton />;
   if (error) return <ErrorState message={error.message} />;
   if (!data?.note)
@@ -54,17 +57,6 @@ const NoteContent = ({ slug }: { slug: string }) => {
       hour: "2-digit",
       minute: "2-digit",
     }).format(new Date(date));
-  };
-
-  const downloadAttachment = (fileKey: string, title: string) => {
-    const url = constructFileUrl(fileKey);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${title}.pdf`;
-    link.target = "_blank";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   return (
@@ -140,7 +132,7 @@ const NoteContent = ({ slug }: { slug: string }) => {
                   <PDFViewer
                     pdfUrl={constructFileUrl(attachment.fileKey)}
                     width="100%"
-                    height={1000}
+                    height={isMobile ? 500 : 1000}
                   />
                 </div>
               ))}

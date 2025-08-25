@@ -1,7 +1,16 @@
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
   ChevronLeft,
   ChevronRight,
+  Menu,
   RotateCw,
   ZoomIn,
   ZoomOut,
@@ -26,6 +35,7 @@ const PDFViewer: React.FC<PDFJSViewerProps> = ({
   const [loading, setLoading] = useState(true);
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Load PDF.js from CDN
@@ -122,58 +132,119 @@ const PDFViewer: React.FC<PDFJSViewerProps> = ({
     <div className="w-full bg-background" style={{ width, height }}>
       {/* Toolbar */}
       <div className="flex justify-between items-center p-4 bg-muted/30 sticky top-0 z-10">
-        {/* Navigation Controls */}
-        <div className="flex items-center space-x-2">
-          <Button
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage <= 1}
-            size="icon"
-            variant="default"
-          >
-            <ChevronLeft />
-          </Button>
+        {isMobile ? (
+          // Mobile Layout - Dropdown Menu
+          <>
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage <= 1}
+                size="icon"
+                variant="default"
+              >
+                <ChevronLeft />
+              </Button>
 
-          <div className="px-3 py-2 bg-background rounded-lg border border-border text-sm">
-            <span className="text-foreground font-medium">
-              {currentPage} / {totalPages}
-            </span>
-          </div>
+              <div className="px-2 py-1 bg-background rounded-lg border border-border text-xs">
+                <span className="text-foreground font-medium">
+                  {currentPage}/{totalPages}
+                </span>
+              </div>
 
-          <Button
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage >= totalPages}
-            size="icon"
-            variant="default"
-          >
-            <ChevronRight />
-          </Button>
-        </div>
+              <Button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage >= totalPages}
+                size="icon"
+                variant="default"
+              >
+                <ChevronRight />
+              </Button>
+            </div>
 
-        {/* Zoom and Action Controls */}
-        <div className="flex items-center space-x-2">
-          <Button onClick={handleZoomOut} size="icon" variant="secondary">
-            <ZoomOut size={16} />
-          </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="secondary">
+                  <Menu size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={handleZoomOut}>
+                  <ZoomOut size={16} />
+                  Zoom Out
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleZoomIn}>
+                  <ZoomIn size={16} />
+                  Zoom In
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleRotate}>
+                  <RotateCw size={16} />
+                  Rotate
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled>
+                  Zoom: {Math.round(scale * 100)}%
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        ) : (
+          // Desktop Layout - Original
+          <>
+            {/* Navigation Controls */}
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage <= 1}
+                size="icon"
+                variant="default"
+              >
+                <ChevronLeft />
+              </Button>
 
-          <div className="px-3 py-2 bg-background rounded-lg border border-border text-sm min-w-[60px] text-center">
-            <span className="text-foreground font-medium">
-              {Math.round(scale * 100)}%
-            </span>
-          </div>
+              <div className="px-3 py-2 bg-background rounded-lg border border-border text-sm">
+                <span className="text-foreground font-medium">
+                  {currentPage} / {totalPages}
+                </span>
+              </div>
 
-          <Button onClick={handleZoomIn} size="icon" variant="secondary">
-            <ZoomIn size={16} />
-          </Button>
+              <Button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage >= totalPages}
+                size="icon"
+                variant="default"
+              >
+                <ChevronRight />
+              </Button>
+            </div>
 
-          <Button
-            onClick={handleRotate}
-            size="icon"
-            variant="secondary"
-            title="Rotate"
-          >
-            <RotateCw size={16} />
-          </Button>
-        </div>
+            {/* Zoom and Action Controls */}
+            <div className="flex items-center space-x-2">
+              <Button onClick={handleZoomOut} size="icon" variant="secondary">
+                <ZoomOut size={16} />
+              </Button>
+
+              <div className="px-3 py-2 bg-background rounded-lg border border-border text-sm min-w-[60px] text-center">
+                <span className="text-foreground font-medium">
+                  {Math.round(scale * 100)}%
+                </span>
+              </div>
+
+              <Button onClick={handleZoomIn} size="icon" variant="secondary">
+                <ZoomIn size={16} />
+              </Button>
+
+              <Button
+                onClick={handleRotate}
+                size="icon"
+                variant="secondary"
+                title="Rotate"
+              >
+                <RotateCw size={16} />
+              </Button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* PDF Canvas */}

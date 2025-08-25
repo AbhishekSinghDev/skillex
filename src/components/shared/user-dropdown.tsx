@@ -10,13 +10,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
-import { IconBook, IconDashboard, IconHome } from "@tabler/icons-react";
+import {
+  IconBook,
+  IconDashboard,
+  IconDeviceIpadHorizontalPlus,
+  IconDeviceTvOld,
+  IconHome,
+  IconVideoPlus,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import Logout from "./logout";
 
 const UserDropdown = () => {
   const { data: session } = authClient.useSession();
+
+  const isAdmin = session?.user.role === "admin";
 
   return (
     <DropdownMenu>
@@ -35,7 +44,7 @@ const UserDropdown = () => {
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+        className="w-(--radix-dropdown-menu-trigger-width) min-w-64 rounded-lg"
         side="bottom"
         align="end"
         sideOffset={4}
@@ -73,17 +82,44 @@ const UserDropdown = () => {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/courses">
+            <Link href="/notes">
               <IconBook />
-              Courses
+              Notes
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/admin">
-              <IconDashboard />
-              Dashboard
+            <Link href="/courses">
+              <IconDeviceTvOld />
+              Courses
             </Link>
           </DropdownMenuItem>
+
+          {isAdmin && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>
+                <span>Admin</span>
+              </DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link href="/admin">
+                  <IconDashboard />
+                  Dashboard
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/admin/notes/create">
+                  <IconDeviceIpadHorizontalPlus />
+                  Create Note
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/admin/courses/create">
+                  <IconVideoPlus />
+                  Create Course
+                </Link>
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>

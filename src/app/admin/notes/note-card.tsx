@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { ListNote } from "@/lib/type";
-import { IconEye, IconPencil, IconTrash } from "@tabler/icons-react";
+import { IconEye, IconEyeOff, IconPencil } from "@tabler/icons-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   ArrowRight,
@@ -69,16 +69,23 @@ const NoteCard = ({ note }: NoteCardProps) => {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href={`/admin/notes/${note.slug}/preview`}>
+                <Link href={`/notes/${note.slug}`}>
                   <IconEye className="h-4 w-4" />
                   Preview
                 </Link>
               </DropdownMenuItem>
               <Separator />
-              <DropdownMenuItem className="text-destructive">
-                <IconTrash className="h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
+              {note.isPublished ? (
+                <DropdownMenuItem className="text-destructive">
+                  <IconEyeOff className="h-4 w-4" />
+                  Un Publish
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem className="text-destructive">
+                  <IconEye className="h-4 w-4" />
+                  Publish
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -97,8 +104,8 @@ const NoteCard = ({ note }: NoteCardProps) => {
             <div className="flex items-center gap-1">
               <Paperclip className="h-4 w-4" />
               <span>
-                {note.attachments.length} PDF
-                {note.attachments.length !== 1 ? "s" : ""}
+                {note?.attachments?.length} PDF
+                {note?.attachments?.length !== 1 ? "s" : ""}
               </span>
             </div>
             <div className="flex items-center gap-1">
@@ -121,7 +128,7 @@ const NoteCard = ({ note }: NoteCardProps) => {
             Edit
           </Link>
           <Link
-            href={`/admin/notes/${note.slug}/preview`}
+            href={`/notes/${note.slug}`}
             className={buttonVariants({
               size: "sm",
               className: "flex-1",

@@ -48,16 +48,18 @@ export type ListCourse = Omit<
   "description" | "userId"
 >;
 
-export type ListNote = {
+export interface ListNote {
   id: string;
   title: string;
-  slug: string;
   content: string;
+  slug: string;
   isPublished: boolean;
-  attachments: {
+  attachments?: {
     id: string;
+    fileName: string;
     fileKey: string;
+    fileSize: string;
   }[];
   createdAt: Date;
   updatedAt: Date;
-};
+}

@@ -33,6 +33,10 @@ export async function GET(req: Request) {
       },
     });
 
+    if (!noteData?.isPublished) {
+      return NextResponse.json({ message: "Note not found" }, { status: 404 });
+    }
+
     return NextResponse.json({ note: noteData }, { status: 200 });
   } catch (error) {
     console.error("Error in GET /api/note:", error);

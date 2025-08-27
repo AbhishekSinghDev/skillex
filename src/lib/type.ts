@@ -53,6 +53,7 @@ export interface ListNote {
   title: string;
   content: string;
   slug: string;
+  thumbnailKey: string;
   isPublished: boolean;
   attachments?: {
     id: string;

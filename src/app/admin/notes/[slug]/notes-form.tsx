@@ -28,10 +28,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ListNote } from "@/lib/type";
-import { generateSlug } from "@/lib/utils";
+import { constructFileUrl, generateSlug } from "@/lib/utils";
 import { NoteCreationSchema } from "@/lib/zod-schema";
-import { IconSparkles } from "@tabler/icons-react";
+import { IconImageInPicture, IconSparkles } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -180,6 +181,7 @@ const NotesForm = ({ slug }: NotesFormProps) => {
         title: data.note.title,
         content: JSON.stringify(noteContent),
         slug: data.note.slug,
+        thumbnailKey: data.note?.thumbnailKey ?? "",
         isPublished: data.note.isPublished,
         attachments:
           data.note.attachments?.map((att) => ({
@@ -285,6 +287,44 @@ const NotesForm = ({ slug }: NotesFormProps) => {
               </FormItem>
             )}
           />
+
+          <div>
+            {/* Note Thumbnail */}
+            <FormField
+              control={form.control}
+              name="thumbnailKey"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2 text-sm font-medium">
+                    <IconImageInPicture className="w-4 h-4" />
+                    Note Thumbnail
+                  </FormLabel>
+                  <FormControl>
+                    <DNDFileUploader
+                      value={field.value}
+                      onChange={field.onChange}
+                      fileType="image"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Render Thumbnail */}
+            {form.getValues("thumbnailKey") && (
+              <div>
+                <h4 className="text-sm font-medium mb-2">Current Thumbnail</h4>
+                <Image
+                  src={constructFileUrl(form.getValues("thumbnailKey"))}
+                  alt="Note Thumbnail"
+                  className="w-48 h-48 object-cover rounded"
+                  height={192}
+                  width={192}
+                />
+              </div>
+            )}
+          </div>
 
           {/* Attachments Field */}
           <FormField

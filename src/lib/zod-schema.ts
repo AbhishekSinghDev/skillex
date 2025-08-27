@@ -73,6 +73,7 @@ export const NoteCreationSchema = z4.object({
       /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
       "Slug must be lowercase letters, numbers, and hyphens only"
     ),
+  thumbnailKey: z4.string().min(1, "Thumbnail key is required"),
   isPublished: z4.boolean().default(false),
   attachments: z4
     .array(

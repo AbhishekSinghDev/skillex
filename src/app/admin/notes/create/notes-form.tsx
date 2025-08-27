@@ -28,11 +28,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { generateSlug } from "@/lib/utils";
 import { NoteCreationSchema } from "@/lib/zod-schema";
-import { IconSparkles } from "@tabler/icons-react";
+import { IconImageInPicture, IconSparkles } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 const NotesForm = () => {
+  const router = useRouter();
   const form = useForm<z.infer<typeof NoteCreationSchema>>({
     resolver: zodResolver(NoteCreationSchema),
     defaultValues: {
@@ -64,7 +66,7 @@ const NotesForm = () => {
     createNote(values, {
       onSuccess: () => {
         toast.success("Note created successfully!");
-        form.reset();
+        router.push("/admin/notes");
       },
       onError: () => {
         toast.error("Failed to create note");
@@ -165,6 +167,28 @@ const NotesForm = () => {
                   <RichTextEditor
                     value={field.value}
                     onChange={field.onChange}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Note Thumbnail */}
+          <FormField
+            control={form.control}
+            name="thumbnailKey"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2 text-sm font-medium">
+                  <IconImageInPicture className="w-4 h-4" />
+                  Note Thumbnail
+                </FormLabel>
+                <FormControl>
+                  <DNDFileUploader
+                    value={field.value}
+                    onChange={field.onChange}
+                    fileType="image"
                   />
                 </FormControl>
                 <FormMessage />

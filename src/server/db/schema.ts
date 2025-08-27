@@ -152,6 +152,8 @@ export const note = pgTable("note", {
   title: text("title").notNull(),
   content: text("content").notNull(),
   slug: text("slug").notNull().unique(),
+  thumbnailKey: text("thumbnail_key").notNull(),
+  views: numeric("views").notNull().default("0"),
   isPublished: boolean("is_published").default(false).notNull(),
   createdBy: uuid("created_by")
     .notNull()
